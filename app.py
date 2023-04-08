@@ -2,6 +2,38 @@ import pygame
 from random import randint, choice
 from sys import exit
 
+from database import Database
+
+class Images:
+    """ Class to manage all images in the game"""
+    def __init__(self):
+        self.sky_image = pygame.image.load('graphics/Sky.png')
+        self.ground_image = pygame.image.load('graphics/ground.png')
+        self.player_image = pygame.image.load('graphics/Player/player_stand.png')
+        self.player_walk_1 = pygame.image.load('graphics/Player/player_walk_1.png')
+        self.player_walk_2 = pygame.image.load('graphics/Player/player_walk_2.png')
+        self.jump_image = pygame.image.load('graphics/Player/jump.png')
+        self.fly_1 = pygame.image.load('graphics/Fly/Fly1.png')
+        self.fly_2 = pygame.image.load('graphics/Fly/Fly2.png')
+        self.snail_1 = pygame.image.load('graphics/snail/snail1.png')
+        self.snail_2 = pygame.image.load('graphics/snail/snail2.png')
+
+    def convert_images(self):
+        self.player_image = pygame.transform.rotozoom(self.player_image, 0, 2)
+        self.ground_image.convert()
+        self.sky_image.convert()
+        self.player_image.convert()
+        self.player_walk_1.convert_alpha()
+        self.player_walk_2.convert_alpha()
+        self.jump_image.convert_alpha()
+        self.fly_1.convert_alpha()
+        self.fly_2.convert_alpha()
+        self.snail_1.convert_alpha()
+        self.snail_2.convert_alpha()
+
+
+images = Images()
+
 
 class Interface:
     """ Class to show and manage interface"""
@@ -10,10 +42,11 @@ class Interface:
         pygame.init()
         self.screen = pygame.display.set_mode((800, 400))
         pygame.display.set_caption("Pixel Runner")
+        images.convert_images()
         self.font = pygame.font.Font('font/Pixeltype.ttf', 50)
         # Initialize main images
-        self.sky_surface = pygame.image.load('graphics/Sky.png').convert()
-        self.ground_surface = pygame.image.load('graphics/ground.png').convert()
+        self.sky_surface = images.sky_image
+        self.ground_surface = images.ground_image
         # Set clock and bg music
         self.clock = pygame.time.Clock()
         self.bg_music = pygame.mixer.Sound('audio/music.wav')
@@ -23,7 +56,7 @@ class Interface:
         self.start_time = 0
         self.score = 0
         # Initialize texts and images for intro and end screen
-        self.player_stand = pygame.image.load('graphics/Player/player_stand.png')
+        self.player_stand = images.player_image
 
     def show_background(self):
         # Function to show background of the game
@@ -44,7 +77,7 @@ class Interface:
         welcome_text = self.font.render("Pixel Runner", False, 'Black')
         welcome_text_rect = welcome_text.get_rect(center=(400, 50))
 
-        player_stand = pygame.transform.rotozoom(self.player_stand, 0, 2)
+        player_stand = images.player_image
         player_stand_rect = player_stand.get_rect(center=(400, 200))
 
         instruction_text = self.font.render("Press SPACE to run!", False, 'Black')
@@ -68,10 +101,10 @@ class Player(pygame.sprite.Sprite):
     """ Class to manage Player related functions """
     def __init__(self):
         super().__init__()
-        player_walk_1 = pygame.image.load('graphics/Player/player_walk_1.png').convert_alpha()
-        player_walk_2 = pygame.image.load('graphics/Player/player_walk_2.png').convert_alpha()
+        player_walk_1 = images.player_walk_1
+        player_walk_2 = images.player_walk_2
         self.walk = [player_walk_1, player_walk_2]
-        self.jump_image = pygame.image.load('graphics/Player/jump.png').convert_alpha()
+        self.jump_image = images.jump_image
         self.player_index = 0
 
         self.image = self.walk[self.player_index]
@@ -116,13 +149,13 @@ class Obstacle(pygame.sprite.Sprite):
     def __init__(self, type):
         super().__init__()
         if type == 'fly':
-            fly_1 = pygame.image.load('graphics/Fly/Fly1.png').convert_alpha()
-            fly_2 = pygame.image.load('graphics/Fly/Fly2.png').convert_alpha()
+            fly_1 = images.fly_1
+            fly_2 = images.fly_2
             self.frames = [fly_1, fly_2]
             y_pos = 210
         if type == 'snail':
-            snail_1 = pygame.image.load('graphics/snail/snail1.png').convert_alpha()
-            snail_2 = pygame.image.load('graphics/snail/snail2.png').convert_alpha()
+            snail_1 = images.snail_1
+            snail_2 = images.snail_2
             self.frames = [snail_1, snail_2]
             y_pos = 300
 
