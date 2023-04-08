@@ -4,6 +4,9 @@ from sys import exit
 
 from database import Database
 
+db = Database()
+
+
 class Images:
     """ Class to manage all images in the game"""
     def __init__(self):
@@ -40,10 +43,13 @@ class Interface:
     def __init__(self):
         # Initialize pygame
         pygame.init()
-        self.screen = pygame.display.set_mode((800, 400))
+        self.screen_width = 800
+        self.screen_height = 400
+        self.screen = pygame.display.set_mode((self.screen_width , self.screen_height))
         pygame.display.set_caption("Pixel Runner")
         images.convert_images()
-        self.font = pygame.font.Font('font/Pixeltype.ttf', 50)
+        self.font_size = 50
+        self.font = pygame.font.Font('font/Pixeltype.ttf', self.font_size)
         # Initialize main images
         self.sky_surface = images.sky_image
         self.ground_surface = images.ground_image
@@ -58,6 +64,11 @@ class Interface:
         # Initialize texts and images for intro and end screen
         self.player_stand = images.player_image
 
+        # Initialize button variables
+        self.button_pos = 695, 35
+        self.width = 80
+        self.height = 80
+
     def show_background(self):
         # Function to show background of the game
         self.screen.blit(self.sky_surface, (0, 0))
@@ -70,6 +81,12 @@ class Interface:
         score_rect = score_surface.get_rect(center=(400, 50))
         self.screen.blit(score_surface, score_rect)
         return current_time // 1000
+
+    def show_scoreboard_button(self):
+        pygame.draw.rect(self.screen, (0, 122, 122), (self.button_pos[0], self.button_pos[1], self.width, self.height))
+        label = self.font.render("TOP", True, (255, 255, 255))
+        label_pos = 710, 60
+        self.screen.blit(label, label_pos)
 
     def show_intro_and_end_screen(self):
         # Function about rendering intro or end screen depending on state of game
@@ -85,6 +102,7 @@ class Interface:
 
         self.screen.blit(player_stand, player_stand_rect)
         self.screen.blit(welcome_text, welcome_text_rect)
+        self.show_scoreboard_button()
 
         score_message = self.font.render(f"Your score: {self.score}!", False, 'Black')
         score_message_rect = score_message.get_rect(center=(400, 330))
@@ -95,6 +113,51 @@ class Interface:
 
 
 interface = Interface()
+
+
+class Scoreboard:
+    def __init__(self):
+        self.scoreboard_pos = (400, 200)
+        self.scoreboard_width = 300
+        self.scoreboard_height = 300
+        self.scoreboard_color = (0, 122, 122)
+        self.scoreboard_border_color = (0, 0, 0)
+        self.scoreboard_border_width = 2
+        self.scoreboard_label = "SCOREBOARD"
+        self.scoreboard_label_color = (0, 0, 0)
+        self.scoreboard_label_pos = (
+            self.scoreboard_pos[0] - self.scoreboard_width // 2, self.scoreboard_pos[1] - self.scoreboard_height // 2
+        )
+
+    def show_scoreboard(self, scores):
+        # Draw the scoreboard background and border
+        pygame.draw.rect(interface.screen, self.scoreboard_color, (
+            self.scoreboard_pos[0] - self.scoreboard_width // 2,
+            self.scoreboard_pos[1] - self.scoreboard_height // 2,
+            self.scoreboard_width, self.scoreboard_height
+        ))
+        pygame.draw.rect(interface.screen, self.scoreboard_border_color, (
+            self.scoreboard_pos[0] - self.scoreboard_width // 2,
+            self.scoreboard_pos[1] - self.scoreboard_height // 2,
+            self.scoreboard_width, self.scoreboard_height
+        ), self.scoreboard_border_width)
+
+        # Draw the scoreboard label
+        label = interface.font.render(self.scoreboard_label, True, self.scoreboard_label_color)
+        label_pos = (300, 65)
+        interface.screen.blit(label, label_pos)
+
+        # Draw the scores
+        for i in range(len(scores)):
+            score_label = interface.font.render(f'{i + 1}. {scores[i][0]} points ', True, self.scoreboard_label_color)
+
+            score_pos = (self.scoreboard_pos[0] - self.scoreboard_width // 2 + interface.font_size,
+                         self.scoreboard_pos[1] - self.scoreboard_height // 2 + interface.font_size + (
+                                     i * interface.font_size))
+            interface.screen.blit(score_label, score_pos)
+
+
+scoreboard = Scoreboard()
 
 
 class Player(pygame.sprite.Sprite):
@@ -185,6 +248,7 @@ class Game:
     def __init__(self):
         self.run = True
         self.game_active = False
+        self.scoreboard_show = False
 
         # Groups
         self.player = pygame.sprite.GroupSingle(Player())
@@ -199,9 +263,10 @@ class Game:
         pygame.time.set_timer(self.fly_animations_timer, 200)
 
     def collisions_sprite(self):
-        # Function to check if sprites are collinding
+        # Function to check if sprites are colliding
         if pygame.sprite.spritecollide(self.player.sprite, self.obstacles, True):
             self.obstacles.empty()
+            db.add_record(interface.score)
             return False
         return True
 
@@ -217,6 +282,14 @@ class Game:
                     if event.type == game.obstacle_timer:
                         self.obstacles.add(Obstacle(choice(['fly', 'snail', 'snail'])))
                 else:
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        mouse_pos = pygame.mouse.get_pos()
+                        if game.scoreboard_show:
+                            self.scoreboard_show = False
+                        if interface.button_pos[0] <= mouse_pos[0] <= interface.button_pos[0] + interface.width and \
+                                interface.button_pos[1] <= mouse_pos[1] <= interface.button_pos[1] + interface.width:
+                            # Show scoreboard when button is clicked
+                            self.scoreboard_show = True
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_SPACE:
                             self.game_active = True
@@ -237,7 +310,10 @@ class Game:
 
             else:
                 # Screen showing on start or end game
-                interface.show_intro_and_end_screen()
+                if self.scoreboard_show:
+                    scoreboard.show_scoreboard(db.get_top_five())
+                else:
+                    interface.show_intro_and_end_screen()
 
             pygame.display.update()
             interface.clock.tick(60)

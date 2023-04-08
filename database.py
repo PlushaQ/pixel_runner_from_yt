@@ -19,16 +19,17 @@ class Database:
     def __init__(self):
         with DatabaseConnection('scoreboard.db') as connection:
             cursor = connection.cursor()
-            cursor.execute('CREATE TABLE IF NOT EXIST scoreboard (id integer primary key, score integer)')
+            cursor.execute('CREATE TABLE IF NOT EXISTS scoreboard (score INT)')
 
     def add_record(self, score):
         with DatabaseConnection('scoreboard.db') as connection:
             cursor = connection.cursor()
-            cursor.execute('INSERT INTO scoreboard VALUES (?)', score)
+            cursor.execute('INSERT INTO scoreboard VALUES (?)', (score,
+                                                                 ))
 
-    def get_top_ten(self):
+    def get_top_five(self):
         with DatabaseConnection('scoreboard.db') as connection:
             cursor = connection.cursor()
-            cursor.execute("SELECT * FROM scoreboard ORDER BY score LIMIT 10")
+            cursor.execute("SELECT * FROM scoreboard ORDER BY score DESC LIMIT 5")
             top_ten = cursor.fetchall()
         return top_ten
