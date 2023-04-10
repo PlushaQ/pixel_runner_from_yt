@@ -24,8 +24,7 @@ class Database:
     def add_record(self, score):
         with DatabaseConnection('scoreboard.db') as connection:
             cursor = connection.cursor()
-            cursor.execute('INSERT INTO scoreboard VALUES (?)', (score,
-                                                                 ))
+            cursor.execute('INSERT INTO scoreboard VALUES (?)', (score,))
 
     def get_top_five(self):
         with DatabaseConnection('scoreboard.db') as connection:
