@@ -16,8 +16,9 @@ scoreboard = Scoreboard()
 
 class Game:
     """ Main function to manage main loop, game logic and collisions"""
-    def __init__(self):
+    def __init__(self, player):
         images.convert_images()
+        interface.music_init()
         self.run = True
         self.game_active = False
         self.scoreboard_show = False
@@ -25,13 +26,15 @@ class Game:
         self.start_time = 0
         self.clock = pygame.time.Clock()
         # Groups
-        self.player = pygame.sprite.GroupSingle(Player(*images.player_images()))
+        self.player = pygame.sprite.GroupSingle(player)
         self.obstacles = pygame.sprite.Group()
 
         # Timers
         self.obstacle_timer = pygame.USEREVENT + 1
         self.snail_animations_timer = pygame.USEREVENT + 2
         self.fly_animations_timer = pygame.USEREVENT + 3
+
+    def timers_init(self):
         pygame.time.set_timer(self.obstacle_timer, 1400)
         pygame.time.set_timer(self.snail_animations_timer, 500)
         pygame.time.set_timer(self.fly_animations_timer, 200)
@@ -100,7 +103,8 @@ class Game:
             self.clock.tick(60)
 
 
-game = Game()
+game = Game(Player(*images.player_images()))
 
 if __name__ == '__main__':
+    game.timers_init()
     game.start_game()
